@@ -1,0 +1,105 @@
+<!doctype html>
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html ">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/app-route/app-location.html">
+
+
+
+<dom-module id="postit-register">
+    <template>
+        <style include="shared-styles">
+             :host {
+                display: block;
+                padding: 10px;
+            }
+
+        </style>
+
+        <app-location route="{{route}}"></app-location>
+
+
+        <iron-ajax id="register" method="POST" url="http://localhost:8080/PostIt/resources/users/register" handle-as="json" content-type="application/json" on-response="handleResponse" on-error="handleError">
+        </iron-ajax>
+        <p>
+
+
+            <div class="card">
+
+                <h1>Register</h1>
+
+                <dom-if if="[[error]]">
+                    <!--valore unidirezionale, solo di lettua nel template -->
+
+                    <template>
+                        <p class="alert-error"><strong>Error:</strong> [[error]]</p>
+                    </template>
+
+                </dom-if>
+                <paper-input label="nome" value="{{credential.usr}}"></paper-input>
+                <paper-input label="email" value="{{credential.email}}"></paper-input>
+
+                <paper-input label="password" type="password" value="{{credential.pwd}}"></paper-input>
+                <br />
+                <paper-button raised class="primary" on-tap="postRegister">Registra</paper-button>
+            </div>
+        </p>
+
+    </template>
+
+    <script>
+        class PostitRegister extends Polymer.Element {
+            static get is() {
+                return 'postit-register';
+            }
+
+            constructor() {
+                super();
+                this.credential = {}; //reset form data
+            }
+
+            static get properties() {
+                return {
+                    page: {
+                        type: String,
+                        reflectToAttribute: true,
+                        observer: '_pageChanged',
+                    },
+                };
+            }
+
+
+
+
+            postRegister() {
+
+                //alert(JSON.stringify(this.credential));
+                this.$.register.body = this.credential;
+                this.$.register.generateRequest(); //metodo x originare la richiesta
+
+            }
+
+            handleResponse(data) {
+                alert("registrazione ok");
+                this.set("route.path", "/login");
+
+
+
+
+            }
+
+
+
+
+            handleError(data) {
+                console.log(data.detail.request.xhr); //component che fa richiesta ajax xhr
+                this.error = "register failed...";
+            }
+        }
+
+        window.customElements.define(PostitRegister.is, PostitRegister);
+
+    </script>
+</dom-module>

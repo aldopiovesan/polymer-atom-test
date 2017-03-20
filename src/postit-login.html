@@ -1,0 +1,111 @@
+<!doctype html>
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html ">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/app-route/app-location.html">
+
+
+<dom-module id="postit-login">
+    <template>
+        <style include="shared-styles">
+             :host {
+                display: block;
+                padding: 10px;
+            }
+
+        </style>
+        <app-location route="{{route}}"></app-location>
+
+        <iron-ajax id="login" method="POST" url="http://localhost:8080/PostIt/resources/users/login" handle-as="json" content-type="application/json" on-response="handleResponse" on-error="handleError">
+        </iron-ajax>
+
+        <p>
+
+            <div class="card">
+
+                <h1>Login</h1>
+
+                <dom-if if="[[error]]">
+                    <!--valore unidirezionale, solo di lettua nel template -->
+
+                    <template>
+                        <p class="alert-error"><strong>Error:</strong> [[error]]</p>
+                    </template>
+
+                </dom-if>
+                <paper-input label="username" value="{{credential.usr}}"></paper-input>
+                <paper-input label="password" type="password" value="{{credential.pwd}}"></paper-input><br />
+                <paper-button raised class="primary" on-tap="postLogin">Login</paper-button>
+            </div>
+        </p>
+    </template>
+
+    <script>
+        class PostitLogin extends Polymer.Element {
+            static get is() {
+                return 'postit-login';
+            }
+
+            constructor() {
+                super();
+                this.credential = {}; //reset form data
+            }
+
+
+
+            postLogin() {
+                //alert(JSON.stringify(this.credential));
+                this.$.login.body = this.credential;
+                this.$.login.generateRequest(); //metodo x originare la richiesta
+            }
+
+            handleResponse(data) { // metodo x prendere la chiamata ajax
+                let response = data.detail.response; //
+
+
+
+
+
+
+                if (response.id_token) {
+
+                    this.error = "";
+                    this.storedUser = { //proprieta utilizzate in users
+
+                        name: this.credential.usr,
+                        token: response.id_token,
+                        loggedin: true
+                    };
+
+                    //  console.log(this.storedUser);
+                    window.sessionStorage.setItem("user", JSON.stringify(this.storedUser)); //il browser mette a disp window.sessionStorage x salvare oggetti con i rispettivi valori...stringy serve x mettere in stringa file json
+                    this.set("route.path", "/messaggi");
+                    this.dispatchEvent(new CustomEvent('user-logged-in', { //genero un evento con nome user-logged-in
+                        bubbles: true,
+                        composed: true, //x far uscire l'evento al di fuori delle'elemnto stesso uso queste
+                        detail: {
+                            name: this.credential.usr,
+                            token: response.id_token,
+                            loggedin: true
+                        }
+                    }));
+
+                }
+                this.credential = {};
+            }
+
+            handleError(data) {
+                console.log(data.detail.request.xhr); //component che fa richiesta ajax xhr
+                this.error = "login failed...";
+            }
+
+
+        }
+
+
+        window.customElements.define(PostitLogin.is, PostitLogin);
+
+    </script>
+</dom-module>

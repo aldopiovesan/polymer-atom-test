@@ -6,6 +6,7 @@
     "src/postit-messaggi.html",
     "src/postit-login.html",
     "src/postit-register.html",
+    "src/postit-messaggi-data.html"
     "src/my-view404.html"
   ],
   "sources": [

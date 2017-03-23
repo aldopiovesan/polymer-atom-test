@@ -1,0 +1,99 @@
+<!doctype html>
+
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+
+<dom-module id="postit-messaggi-data">
+    <template id="postit">
+        <style include="shared-styles">
+             :host {
+                display: block;
+                padding: 10px;
+            }
+
+             :
+
+        </style>
+        <iron-ajax id="req" method="GET" headers="{{headers}}" url="http://localhost:8080/PostIt/resources/postit" handle-as="json" on-response="handleResponse"></iron-ajax>
+
+        <paper-material id="paperpostit" elevation="2" class="card box" on-tap="deletePost">
+            <paper-fab icon="icons:delete"></paper-fab>
+            <span>[[titolo]]</span>
+            <span>[[contenuto]]</span>
+            <span>[[message_id]]</span>
+        </paper-material>
+
+
+    </template>
+
+    <script>
+        class Postitmessaggidata extends Polymer.Element {
+            static get is() {
+                return 'postit-messaggi-data';
+            }
+
+
+            static get properties() {
+                return {
+                    user: {
+                        type: Object,
+                    },
+
+                    message_id: {
+
+                        type: Number,
+                    },
+
+                    titolo: {
+
+                        type: String,
+                    },
+
+                    contenuto: {
+
+                        type: String,
+                    }
+                }
+            }
+
+            handleResponse(data) {
+                console.log(data);
+                this.dispatchEvent(new CustomEvent(
+                    'message_deleted', {
+                        bubbles: true,
+                        composed: true,
+
+                        detail: {},
+
+
+                    }))
+            }
+
+            deletePost(data) {
+                this.$.req.method = "DELETE";
+                this.$.req.url = "http://localhost:8080/PostIt/resources/postit/" + this.message_id;
+                console.log("Il token di questo user è" + this.user.token);
+                this.$.req.headers = {
+                    id_token: this.user.token,
+                };
+                this.$.req.generateRequest();
+            }
+        }
+
+        window.customElements.define(Postitmessaggidata.is, Postitmessaggidata);
+
+    </script>
+</dom-module>

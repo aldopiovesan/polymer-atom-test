@@ -13,9 +13,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
 <link rel="import" href="shared-styles.html">
 <link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/paper-fab/paper-fab.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="postit-messaggi-data.html">
 
 <dom-module id="postit-messaggi">
-    <template>
+    <template id="postit">
         <style include="shared-styles">
              :host {
                 display: block;
@@ -23,18 +26,24 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             }
 
         </style>
-        <iron-ajax id="req" method="get" headers="{{headers}}" url="http://localhost:8080/PostIt/resources/postits" handle-as="json" on-response="handleResponse"></iron-ajax>
+        <iron-ajax id="req" method="GET" headers="{{headers}}" url="http://localhost:8080/PostIt/resources/postit" handle-as="json" on-response="handleResponse"></iron-ajax>
+
+        <dom-if if="[[loggedin]]">
+            <paper-button raised on-tap="addPost">+</paper-button>
+            <paper-button raised>canc</paper-button>
+            <paper-button raised>agg</paper-button>
+            <paper-input label="titolo" value="{{titolo}}"></paper-input>
+            <paper-input label="contenuto" value="{{contenuto}}"></paper-input>
+        </dom-if>
+
 
         <div class="card">
             <dom-repeat items="{{messaggi}}" index-as="index">
                 <template>
-                    <p>
-                        {{item.titolo}}
-                    </p>
-
+                    <postit-messaggi-data user="[[user]]" message_id="{{item.id}}" titolo="{{item.titolo}}" contenuto="{{item.contenuto}}">
+                    </postit-messaggi-data>
                 </template>
             </dom-repeat>
-
         </div>
     </template>
 
@@ -46,10 +55,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 
             static get properties() {
-                user: {
-                    type: Object
-                }
+                return {
+                    user: {
+                        type: Object,
+                    },
 
+                    messaggi: {
+
+                        type: Object,
+                    }
+                }
             }
 
             static get observers() {
@@ -61,6 +76,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             constructor() {
                 super();
                 console.log("constructor()...");
+
                 this.messaggi = {};
             }
 
@@ -78,18 +94,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             }
 
             ready() {
-
                 super.ready();
-                console.log("ready()...");
-            }
-
-
-
-
-            handleResponse(data) {
-
-                console.log(data);
-                this.messaggi = data.detail.response;
+                this.addEventListener('message_deleted', (data) => this.onNeedMessagesReload(data));
             }
 
 
@@ -102,14 +108,50 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 }
             }
 
+            handleResponse(data) {
+                console.log(data);
+                console.log("Risposta ricevuta");
+
+                this.messaggi = data.detail.response;
+            }
+
+
             _fetchMessages() {
-                this.$.req.url = "http://localhost:8080/PostIt/resources/postits/user/" + this.user.token;
+                //                this.$.req.url = "http://localhost:8080/PostIt/resources/postit/user/" + this.user.token;
+                this.$.req.method = "GET";
                 this.$.req.headers = {
                     'id_token': this.user.token // window.sessionStorage.getItem("token")                   // vuole la proprieta di un oggetto json nn una string, vedere sopra headers="{{headers}}"
                 };
                 this.$.req.generateRequest();
             }
 
+            addPost(data) {
+                this.$.req.method = "POST";
+                this.$.req.url = "http://localhost:8080/PostIt/resources/postit";
+                this.$.req.contentType = "application/json";
+                this.$.req.headers = {
+                    id_token: this.user.token
+                };
+                this.$.req.body = {
+                    titolo: this.titolo,
+                    contenuto: this.contenuto
+                };
+
+                this.$.req.generateRequest();
+                //          this.messaggi = data.detail.response;
+
+                //            <iron-ajax id="req" headers="{{headers}}" url="" handle-as="json" on-response="handleResponse
+                this.$.req.method = "GET";
+                this.$.req.url = "http://localhost:8080/PostIt/resources/postit";
+                this.$.req.contentType = "";
+                this.$.req.body = "";
+                this.$.req.generateRequest();
+            }
+
+            onNeedMessagesReload(data) {
+
+                this._fetchMessages();
+            }
         }
 
         window.customElements.define(Postitmessaggi.is, Postitmessaggi);
